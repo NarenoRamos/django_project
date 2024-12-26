@@ -1,0 +1,62 @@
+services:
+  db:
+    image: postgres:latest
+    restart: always
+    container_name: django-postgres
+    environment:
+      POSTGRES_DB: postgres_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      PGDATA: /var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - yournetwork
+    volumes:
+      - pgdemodata:/var/lib/postgresql/data
+
+  web:
+    build: .
+    container_name: django-web
+    restart: always
+    depends_on:
+      - db
+    environment:
+      - PIPELINE=production
+      - SECRET_KEY='django-insecure-x0zskzzsfwh%ec*qj9x-#0malufov_-9#62=t-p8#q440dpcf%'  # Replace with your actual secret key or use an env file
+      - DB_NAME=postgres_db  # Replace with the actual database name
+      - DB_USER_NM=admin  # Replace with the actual database user
+      - DB_USER_PW=admin  # Replace with the actual database password
+      - DB_IP=db  # Referencing the db service name, which is the PostgreSQL container
+      - DB_PORT=5432  # Default PostgreSQL port
+    ports:
+      - "8000:8000"
+    networks:
+      - yournetwork
+    volumes:
+      - .:/app  # Koppel de huidige map naar /app in de container (optioneel voor development)
+
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: django-pgadmin
+    restart: always
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: 'True'
+      PGADMIN_CONFIG_SERVER_MODE: 'True'
+    ports:
+      - "8080:80"   # Poort 8080 op de host wordt gemapt naar poort 80 van pgAdmin
+    depends_on:
+      - db
+    networks:
+      - yournetwork
+
+volumes:
+  pgdemodata:
+
+networks:
+  yournetwork:
+    external: true
+
